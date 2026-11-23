@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 type App = { name: string; url: string; emoji: string; icon: string };
-type Shared = { s: { accent: string }; a: App[]; o?: 1 };
+type Shared = { s: { title: string; accent: string }; a: App[]; o?: 1 };
 
 const decode = (s: string): Shared | null => {
   try {
@@ -28,14 +28,27 @@ async function dataUri(u: string) {
   }
 }
 
+// your own main app icon, served from /public
+async function hubIcon(req: Request) {
+  try {
+    const r = await fetch(new URL("/icon-512.png", req.url));
+    if (!r.ok) return null;
+    return `data:image/png;base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: Request) {
   const q = new URL(req.url).searchParams.get("s") || "";
   const data = decode(q);
   const accent = /^#[0-9a-f]{6}$/i.test(data?.s?.accent ?? "") ? data!.s.accent : "#1d1d1f";
-  const solo = data?.o && data.a.length === 1;
-  const apps = (data?.a ?? []).slice(0, solo ? 1 : 3);
-  const icons = await Promise.all(apps.map((a) => (a.emoji || !a.icon ? null : dataUri(a.icon))));
-  const size = solo ? 380 : apps.length > 2 ? 250 : 300;
+  const solo = data?.o && data.a.length === 1 ? data.a[0] : null;
+
+  // single-app link: that app's icon. whole-page link: your main icon.
+  const src = solo ? (solo.emoji || !solo.icon ? null : await dataUri(solo.icon)) : await hubIcon(req);
+  const fallback = solo ? solo.emoji || (solo.name || "?")[0].toUpperCase() : (data?.s?.title || "A")[0].toUpperCase();
+  const size = 380;
 
   return new ImageResponse(
     (
@@ -49,33 +62,28 @@ export async function GET(req: Request) {
           background: `radial-gradient(circle at 50% 45%, ${accent}55 0%, #f5f5f7 72%)`,
         }}
       >
-        {apps.map((a, i) => (
-          <div
-            key={i}
-            style={{
-              width: size,
-              height: size,
-              marginLeft: i ? -size * 0.1 : 0,
-              borderRadius: size * 0.225,
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: icons[i] ? "#ffffff" : "#ececf0",
-              boxShadow: "0 40px 70px -24px rgba(0,0,0,0.38), 0 0 0 2px rgba(0,0,0,0.05)",
-              fontSize: size * 0.48,
-              color: "#6e6e73",
-              transform: `translateY(${solo ? 0 : i % 2 ? 24 : -8}px)`,
-            }}
-          >
-            {icons[i] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={icons[i]!} width={size} height={size} alt="" />
-            ) : (
-              <span>{a.emoji || (a.name || "?")[0].toUpperCase()}</span>
-            )}
-          </div>
-        ))}
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size * 0.225,
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: src ? "#ffffff" : "#ececf0",
+            boxShadow: "0 40px 70px -24px rgba(0,0,0,0.38), 0 0 0 2px rgba(0,0,0,0.05)",
+            fontSize: size * 0.48,
+            color: "#6e6e73",
+          }}
+        >
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={src} width={size} height={size} alt="" />
+          ) : (
+            <span>{fallback}</span>
+          )}
+        </div>
       </div>
     ),
     { width: 1200, height: 630 },
