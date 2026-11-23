@@ -121,7 +121,7 @@ function InstallGuide({ single }: { single?: boolean }) {
 
 type InstallEvent = Event & { prompt: () => Promise<void> };
 
-function useInstall(solo: boolean) {
+function useInstall(solo: boolean, appUrl?: string) {
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
   useEffect(() => {
     const h = (e: Event) => { e.preventDefault(); setDeferred(e as InstallEvent); };
@@ -138,7 +138,7 @@ function useInstall(solo: boolean) {
       return guide();
     }
     if (typeof navigator.share === "function") {
-      try { await navigator.share({ url: u.href }); } catch {}
+      try { await navigator.share({ url: appUrl ?? u.href }); } catch {}
       return;
     }
     guide();
@@ -148,7 +148,7 @@ function useInstall(solo: boolean) {
 function PublicView({ data }: { data: Shared }) {
   const { s, a } = data;
   const solo = data.o && a.length === 1 ? a[0] : null;
-  const install = useInstall(!!solo);
+   const install = useInstall(!!solo, solo?.url);
   const soloUrl = solo?.url;
   useEffect(() => {
     if (!soloUrl) return;
