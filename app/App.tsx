@@ -121,7 +121,7 @@ function InstallGuide({ single }: { single?: boolean }) {
 
 type InstallEvent = Event & { prompt: () => Promise<void> };
 
-function useInstall(solo: boolean, appUrl?: string) {
+function useInstall(solo: boolean) {
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
   useEffect(() => {
     const h = (e: Event) => { e.preventDefault(); setDeferred(e as InstallEvent); };
@@ -131,14 +131,14 @@ function useInstall(solo: boolean, appUrl?: string) {
   const guide = () => document.getElementById("install")?.scrollIntoView({ behavior: "smooth" });
   return async () => {
     const u = new URL(location.href);
-    if (solo) u.searchParams.set("go", "1"); // the shortcut will jump straight to the app
-    if (!solo && deferred) { await deferred.prompt(); setDeferred(null); return; }
-    if (solo && /android/i.test(navigator.userAgent)) {
-      history.replaceState(null, "", u.href); // Chrome's menu saves the current address
+    if (solo) u.searchParams.set("go", "1"); // the saved shortcut will jump straight to the app
+    if (!solo && deferred) { await deferred.prompt(); setDeferred(null); return; } // Android install prompt
+    if (/android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      if (solo) history.replaceState(null, "", u.href); // Safari/Chrome save the current address
       return guide();
     }
     if (typeof navigator.share === "function") {
-      try { await navigator.share({ url: appUrl ?? u.href }); } catch {}
+      try { await navigator.share({ url: u.href }); } catch {}
       return;
     }
     guide();
@@ -148,7 +148,7 @@ function useInstall(solo: boolean, appUrl?: string) {
 function PublicView({ data }: { data: Shared }) {
   const { s, a } = data;
   const solo = data.o && a.length === 1 ? a[0] : null;
-   const install = useInstall(!!solo, solo?.url);
+  const install = useInstall(!!solo);
   const soloUrl = solo?.url;
   useEffect(() => {
     if (!soloUrl) return;
