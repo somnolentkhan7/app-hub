@@ -29,7 +29,9 @@ async function dataUri(u: string) {
 }
 
 export async function GET(req: Request) {
-  const q = new URL(req.url).searchParams.get("s") || "";
+  const sp = new URL(req.url).searchParams;
+  const q = sp.get("s") || "";
+  const px = Math.min(512, Math.max(96, Number(sp.get("size")) || 180));
   const data = decode(q);
   const app = data?.a?.[0];
   if (!app) return Response.redirect(new URL("/apple-touch-icon.png", req.url));
@@ -48,17 +50,17 @@ export async function GET(req: Request) {
           justifyContent: "center",
           background: img ? "#ffffff" : accent,
           color: "#ffffff",
-          fontSize: 100,
+          fontSize: px * 0.55,
         }}
       >
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={img} width={180} height={180} alt="" />
+          <img src={img} width={px} height={px} alt="" />
         ) : (
           <span>{app.emoji || (app.name || "?")[0].toUpperCase()}</span>
         )}
       </div>
     ),
-    { width: 180, height: 180 },
+    { width: px, height: px },
   );
 }

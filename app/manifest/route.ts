@@ -9,20 +9,23 @@ export function GET(req: Request) {
       name = solo ? d.a[0].name : d.s?.title || name;
     } catch {}
   }
+  const icons =
+    solo && s
+      ? [192, 512].map((n) => ({ src: `/apple-icon?s=${s}&size=${n}`, sizes: `${n}x${n}`, type: "image/png" }))
+      : [
+          { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+        ];
   return Response.json(
     {
       name,
       short_name: name.slice(0, 12),
       start_url: s ? `/?s=${s}${solo ? "&go=1" : ""}` : "/",
       scope: "/",
-      display: solo ? "browser" : "standalone",
+      display: "standalone",
       background_color: "#f5f5f7",
       theme_color: "#f5f5f7",
-      icons: [
-        { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-        { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
-        { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-      ],
+      icons,
     },
     { headers: { "content-type": "application/manifest+json" } },
   );

@@ -151,7 +151,13 @@ function PublicView({ data }: { data: Shared }) {
   const install = useInstall(!!solo);
   const soloUrl = solo?.url;
   useEffect(() => {
-    if (soloUrl && new URLSearchParams(location.search).get("go") === "1") location.replace(soloUrl);
+    if (!soloUrl) return;
+    const p = new URLSearchParams(location.search);
+    if (!p.has("s")) return; // ignore the in-dashboard preview
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    if (standalone || p.get("go") === "1") location.replace(soloUrl);
   }, [soloUrl]);
 
   if (solo)

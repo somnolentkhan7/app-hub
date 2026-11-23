@@ -10,9 +10,15 @@ export const metadata: Metadata = {
   ),
   title: "My Apps",
   description: "Collect your apps in one page and share it with a link.",
-  appleWebApp: { capable: true, title: "My Apps", statusBarStyle: "default" },
   manifest: "/manifest",
-  icons: { apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "My Apps", statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
